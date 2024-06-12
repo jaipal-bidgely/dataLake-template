@@ -6,7 +6,7 @@ Some demos of using Spark to write MySQL and Kafka data to data lake,such as Del
 
 ## 2. Version info
 
-`SPARK` 3.1.2
+`SPARK` 3.5.0
 
 `DELTA` 1.0.0
 

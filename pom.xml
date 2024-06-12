@@ -8,39 +8,26 @@
     <artifactId>dataLake-template</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
-    <modules>
-        <module>dataLake-template-delta</module>
-        <module>dataLake-template-iceberg</module>
-        <module>dataLake-template-hudi</module>
-        <module>dataLake-template-delta/dataLake-template-delta-spark-mysql</module>
-        <module>dataLake-template-delta/dataLake-template-delta-spark-kafka</module>
-    </modules>
-
     <properties>
+        <packageName>detalake-template</packageName>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <scala.version>2.12.14</scala.version>
+        <scala.version>2.12.6</scala.version>
+        <scala.compat.version>2.12</scala.compat.version>
+
+        <hadoop.aws.version>3.2.0</hadoop.aws.version>
+        <spark.version>3.5.0</spark.version>
         <log4j.version>1.7.30</log4j.version>
     </properties>
 
-    <dependencyManagement>
+
         <dependencies>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sql_2.12</artifactId>
+                <artifactId>spark-sql_${scala.compat.version}</artifactId>
+                <version>${spark.version}</version>
             </dependency>
-            <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
@@ -51,6 +38,117 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-core_2.12</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- This plugin compiles Java files -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>StreamETLService</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>${project.artifactId}-modulejar-${project.version}</finalName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <finalName>${project.artifactId}-emrjar-${project.version}</finalName>
+                    <artifactSet>
+                        <excludes>
+                            <exclude>com.amazonaws:aws-java-sdk</exclude>
+                            <exclude>org.scala-lang:scala-library</exclude>
+                            <exclude>org.apache.spark:spark-core_${scala.compat.version}</exclude>
+                            <exclude>org.apache.spark:spark-sql_${scala.compat.version}</exclude>
+                            <exclude>org.apache.hadoop:hadoop-aws</exclude>
+                        </excludes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.google</pattern>
+                            <shadedPattern>com.bidgely.shaded.google</shadedPattern>
+                            <includes>
+                                <include>com.google.common.base.*</include>
+                            </includes>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
