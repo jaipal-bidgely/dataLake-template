@@ -4,12 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+<!--    <parent>-->
+<!--        <groupId>dataLake-template</groupId>-->
+<!--        <artifactId>datacube</artifactId>-->
+<!--        <version>3.1-SNAPSHOT</version>-->
+<!--    </parent>-->
+
     <groupId>com.czl</groupId>
     <artifactId>dataLake-template</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <version>1.0</version>
     <properties>
-        <packageName>detalake-template</packageName>
+        <packageName>dataLake-template</packageName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
@@ -40,8 +46,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-spark3.1.2-bundle_2.12</artifactId>
-            <version>0.10.1</version>
+            <artifactId>hudi-spark3.4-bundle_2.12</artifactId>
+            <version>0.14.0</version>
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
@@ -59,9 +65,10 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
+                <directory>src/main/scala</directory>
             </resource>
         </resources>
+        <sourceDirectory>src/main/scala</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
@@ -109,7 +116,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>StreamETLService</mainClass>
+                            <mainClass>com.czl.datalake.template.delta.kafka.Hudi.Hudi</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
