@@ -217,14 +217,42 @@ object Hudi {
       "hoodie.datasource.write.partitionpath.field" -> "partitionpath",
       "hoodie.datasource.write.table.type" -> "COPY_ON_WRITE",
       "hoodie.datasource.write.operation" -> "bulk_insert", // insert, upsert, bulk_insert, delete
-      "hoodie.index.type" -> "GLOBAL_SIMPLE", // SIMPLE, BLOOM, GLOBAL_BLOOM, RECORD_INDEX
+//      "hoodie.index.type" -> "GLOBAL_SIMPLE", // SIMPLE, BLOOM, GLOBAL_BLOOM, RECORD_INDEX
       "hoodie.upsert.shuffle.parallelism" -> "4",
       "hoodie.insert.shuffle.parallelism" -> "4"
     )
 
+    // Z-ORDER CLUSTERING
+    val layoutOptStrategy = "z-order"   // hilbert
+    val clusteringOptions = Map[String, String](
+      "hoodie.clustering.inline" -> "true",
+      "hoodie.clustering.inline.max.commits" -> "1",
+      // NOTE: Small file limit is intentionally kept _ABOVE_ target file-size max threshold for Clustering,
+      // to force re-clustering
+      "hoodie.clustering.plan.strategy.small.file.limit" -> String.valueOf(1024 * 1024 * 1024), // 1Gb
+      "hoodie.clustering.plan.strategy.target.file.max.bytes" -> String.valueOf(128 * 1024 * 1024), // 128Mb
+      "hoodie.clustering.plan.strategy.max.num.groups" -> String.valueOf(4096),
+      HoodieClusteringConfig.LAYOUT_OPTIMIZE_ENABLE.key -> "true",
+      HoodieClusteringConfig.LAYOUT_OPTIMIZE_STRATEGY.key -> layoutOptStrategy,
+      HoodieClusteringConfig.PLAN_STRATEGY_SORT_COLUMNS.key -> "uuid"      //optional, if sorting is needed as part of rewriting data
+    )
+    //     can use this options during write.
+
+    // CLEANING
+    // Set Hudi cleaning options for async cleaning along with writing
+    val cleaningOptions = Map[String, String](
+      "hoodie.clean.automatic" -> "true",
+      "hoodie.clean.async" -> "true",
+      "hoodie.clean.policy" -> "KEEP_LATEST_COMMITS",     // KEEP_LATEST_FILE_VERSIONS, KEEP_LATEST_BY_HOURS
+      "hoodie.clean.max_commits" -> "10"
+    )
+    // can use this options while writing
+
     df2020_2021.write
       .format("hudi")
       .options(hudiOptions)
+      .options(clusteringOptions)
+      .options(cleaningOptions)
       .mode(SaveMode.Overwrite)
       .save(s"$writePath/sample_table")
 
@@ -250,7 +278,7 @@ object Hudi {
       "hoodie.datasource.write.partitionpath.field" -> "partitionpath",
       "hoodie.datasource.write.table.type" -> "COPY_ON_WRITE",
       "hoodie.datasource.write.operation" -> "upsert", // insert, upsert, bulk_insert, delete
-      "hoodie.index.type" -> "GLOBAL_SIMPLE", // SIMPLE
+//      "hoodie.index.type" -> "GLOBAL_SIMPLE", // SIMPLE
       "hoodie.upsert.shuffle.parallelism" -> "4",
       "hoodie.insert.shuffle.parallelism" -> "4"
     )
@@ -258,12 +286,14 @@ object Hudi {
     df2022.write
       .format("hudi")
       .options(hudiUpsertOptions)
+      .options(clusteringOptions)
+      .options(cleaningOptions)
       .mode(SaveMode.Append)
       .save(s"$writePath/sample_table")
 
-    // Read and show the Hudi table
-    val finalTable = spark.read.format("hudi").load(s"$writePath/sample_table")
-    finalTable.show()
+////     Read and show the Hudi table
+//    val finalTable = spark.read.format("hudi").load(s"$writePath/sample_table")
+//    finalTable.show()
 
 
     val timeTravelDF = spark.read.format("hudi")
@@ -273,16 +303,6 @@ object Hudi {
     timeTravelDF.show()
 
 
-    // CLEANING
-    // Set Hudi cleaning options for async cleaning along with writing
-    val cleaningOptions = Map[String, String](
-      "hoodie.clean.automatic" -> "true",
-      "hoodie.clean.async" -> "true",
-      "hoodie.clean.policy" -> "KEEP_LATEST_COMMITS",     // KEEP_LATEST_FILE_VERSIONS, KEEP_LATEST_BY_HOURS
-      "hoodie.clean.max_commits" -> "10"
-    )
-    // can use this options while writing
-
     // or just run a separate process :
     //  spark-submit --master local --class org.apache.hudi.utilities.HoodieCleaner `ls packaging/hudi-utilities-bundle/target/hudi-utilities-bundle-*.jar`\
     //  --target-base-path /path/to/hoodie_table \
@@ -291,21 +311,6 @@ object Hudi {
     //  --hoodie-conf hoodie.cleaner.parallelism=200
 
 
-    // Z-ORDER CLUSTERING
-    val layoutOptStrategy = "z-order"   // hilbert
-    val clusteringOptions = Map[String, String](
-      "hoodie.clustering.inline" -> "true",
-      "hoodie.clustering.inline.max.commits" -> "1",
-      // NOTE: Small file limit is intentionally kept _ABOVE_ target file-size max threshold for Clustering,
-      // to force re-clustering
-      "hoodie.clustering.plan.strategy.small.file.limit" -> String.valueOf(1024 * 1024 * 1024), // 1Gb
-      "hoodie.clustering.plan.strategy.target.file.max.bytes" -> String.valueOf(128 * 1024 * 1024), // 128Mb
-      "hoodie.clustering.plan.strategy.max.num.groups" -> String.valueOf(4096),
-      HoodieClusteringConfig.LAYOUT_OPTIMIZE_ENABLE.key -> "true",
-      HoodieClusteringConfig.LAYOUT_OPTIMIZE_STRATEGY.key -> layoutOptStrategy,
-//      HoodieClusteringConfig.PLAN_STRATEGY_SORT_COLUMNS.key -> "state"      //optional, if sorting is needed as part of rewriting data
-    )
-//     can use this options during write.
 
     ////    Trigger compaction on MoR tables ->
     //    val compactionOptions = Map(
