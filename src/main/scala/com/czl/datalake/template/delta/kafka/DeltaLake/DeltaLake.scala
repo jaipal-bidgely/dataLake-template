@@ -286,7 +286,7 @@ object DeltaLake {
 
     // Z-ORDER clustering
     val deltaTableForClustering = DeltaTable.forPath(spark, "s3://bidgely-adhoc-dev/dhruv/delta/write")
-    deltaTableForClustering.optimize().executeZOrderBy("last_updated_timestamp", "uuid") // example
+    deltaTableForClustering.optimize().executeZOrderBy("uuid") // example
 
     // Time travel
     val dfVersion = spark.read.format("delta").option("versionAsOf", 0).load("s3://bidgely-adhoc-dev/dhruv/delta/write")
