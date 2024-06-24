@@ -116,17 +116,22 @@ object DeltaLake {
       .load("s3://bidgely-adhoc-dev/dhruv/read/event_month=2022-*")
       .withColumn("event_date", extractYearMonth(col("event_date")))
 
+    val windowSpec1 = Window.partitionBy("uuid").orderBy(col("last_updated_timestamp").desc)
+    val deduplicatedData2020_2021 = data2020_2021.withColumn("rank", row_number.over(windowSpec1))
+      .filter(col("rank") === 1)
+      .drop("rank")
+
     // Write the data from 2020 and 2021 to Delta Lake
-    data2020_2021.write
+    deduplicatedData2020_2021.write
       .format("delta")
       .mode(SaveMode.Overwrite)
       .partitionBy("event_date")
       .option("overwriteSchema", "true")
       .save("s3://bidgely-adhoc-dev/dhruv/delta/write")
 
-    // Read the Delta table
-    val deltaTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
-    deltaTable.show()
+//    // Read the Delta table
+//    val deltaTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
+//    deltaTable.show()
 
     // Perform upsert (merge) operation with 2022 data
     val deltaTableInstance = DeltaTable.forPath("s3://bidgely-adhoc-dev/dhruv/delta/write")
@@ -268,20 +273,20 @@ object DeltaLake {
       .insertAll()
       .execute()
 
-    val mergeTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
-    mergeTable.show()
+//    val mergeTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
+//    mergeTable.show()
 
     // Compaction
     val deltaTableToCompact = DeltaTable.forPath(spark, "s3://bidgely-adhoc-dev/dhruv/delta/write")
     deltaTableToCompact.optimize().executeCompaction()
 
-    // Verify the final table after compaction
-    val finalTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
-    finalTable.show()
+//    // Verify the final table after compaction
+//    val finalTable = spark.read.format("delta").load("s3://bidgely-adhoc-dev/dhruv/delta/write")
+//    finalTable.show()
 
     // Z-ORDER clustering
     val deltaTableForClustering = DeltaTable.forPath(spark, "s3://bidgely-adhoc-dev/dhruv/delta/write")
-    deltaTableForClustering.optimize().executeZOrderBy("last_updated_timestamp", "uuid") // example
+    deltaTableForClustering.optimize().executeZOrderBy("uuid") // example
 
     // Time travel
     val dfVersion = spark.read.format("delta").option("versionAsOf", 0).load("s3://bidgely-adhoc-dev/dhruv/delta/write")
