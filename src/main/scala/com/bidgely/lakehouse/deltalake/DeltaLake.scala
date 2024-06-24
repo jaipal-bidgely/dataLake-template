@@ -1,4 +1,4 @@
-package main.scala.com.czl.datalake.template.delta.kafka.DeltaLake
+package com.bidgely.lakehouse.deltalake
 
 import io.delta.tables._
 import org.apache.spark.sql.expressions.Window

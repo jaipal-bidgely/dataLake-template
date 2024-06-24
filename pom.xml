@@ -116,7 +116,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>com.czl.datalake.template.delta.kafka.Hudi.Hudi</mainClass>
+                            <mainClass>com.czl.datalake.template.delta.kafka.hudi.Hudi</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
