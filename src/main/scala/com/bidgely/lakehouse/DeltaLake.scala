@@ -12,6 +12,7 @@ object DeltaLake {
       .appName("DeltaLakeExample")
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+      .config("spark.databricks.delta.retentionDurationCheck.enabled", "false") // Disable retention duration check
       .getOrCreate()
   }
 
@@ -32,19 +33,21 @@ object DeltaLake {
                 partitionFormat: String
               ): DataFrame = {
     val df = spark.read.parquet(readPaths: _*)
-    df.withColumn("partitionpath", date_format(col(partitionCol), partitionFormat))
+//    df.withColumn("partitionpath", date_format(col(partitionCol), partitionFormat))
+    df
   }
 
   def writeDeltaLakeTable(
                            spark: SparkSession,
                            df: DataFrame,
                            writePath: String,
-                           saveMode: SaveMode
+                           saveMode: SaveMode,
+                           partitionKey: String
                          ): Unit = {
     df.write
       .format("delta")
       .mode(saveMode)
-      .partitionBy("partitionpath")
+      .partitionBy(partitionKey)
       .option("overwriteSchema", "true")
       .save(writePath)
   }

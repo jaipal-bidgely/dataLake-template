@@ -11,6 +11,9 @@ object Hudi {
       .appName("Hudi")
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .config("spark.sql.hive.convertMetastoreParquet", "false")
+//      .config("spark.sql.hive.metastore.jars", "/usr/lib/hive/lib/*")
+//      .config("spark.hadoop.hive.metastore.uris", "thrift://ip-10-0-0-73.us-west-2.compute.internal:9083") // Update with your metastore URI
+//      .enableHiveSupport()
       .getOrCreate()
   }
 
@@ -21,16 +24,20 @@ object Hudi {
                 partitionFormat: String
               ): DataFrame = {
     val df = spark.read.parquet(readPaths: _*)
-    df.withColumn("partitionpath", date_format(col(partitionCol), partitionFormat))
+//    df.withColumn("partitionpath", date_format(col(partitionCol), partitionFormat))
+    df
   }
 
   def getHudiOptions(
                       tableName: String,
+                      databaseName: String,
                       recordKeyField: String,
                       precombineField: String,
                       partitionPathField: String,
-                      saveMode: SaveMode,
-                      indexType: Option[String]
+                      writeOperation: String,
+                      indexType: Option[String],
+                      drop_duplicates: String,
+                      writePath: String
                     ): Map[String, String] = {
     val baseOptions = Map[String, String](
       "hoodie.table.name" -> tableName,
@@ -38,9 +45,21 @@ object Hudi {
       "hoodie.datasource.write.precombine.field" -> precombineField,
       "hoodie.datasource.write.partitionpath.field" -> partitionPathField,
       "hoodie.datasource.write.table.type" -> "COPY_ON_WRITE",
-      "hoodie.datasource.write.operation" -> (if (saveMode == SaveMode.Overwrite) "bulk_insert" else "upsert"),
+      "hoodie.datasource.write.operation" -> writeOperation,
       "hoodie.upsert.shuffle.parallelism" -> "4",
-      "hoodie.insert.shuffle.parallelism" -> "4"
+      "hoodie.insert.shuffle.parallelism" -> "4",
+      "hoodie.datasource.write.insert.drop.duplicates" -> drop_duplicates,
+//      "hoodie.datasource.hive_sync.enable" -> "true",
+//      "hoodie.datasource.hive_sync.mode" -> "hms",
+//      "hoodie.datasource.hive_sync.sync_as_datasource" -> "false",
+//      "hoodie.datasource.hive_sync.database" -> databaseName,
+//      "hoodie.datasource.hive_sync.table" -> tableName,
+//      "hoodie.datasource.hive_sync.partition_fields" -> partitionPathField,
+//      "hoodie.datasource.hive_sync.use_jdbc" -> "false",
+//      "hoodie.datasource.hive_sync.partition_extractor_class" -> "org.apache.hudi.hive.MultiPartKeysValueExtractor",
+//      "hoodie.datasource.hive_sync.hive_style_partitioning" -> "true",
+      "hoodie.datasource.write.hive_style_partitioning" -> "true",
+//      "path" -> writePath
     )
 
     val indexTypeOption = indexType match {
@@ -116,13 +135,14 @@ object Hudi {
 
     finalWriter
       .mode(saveMode)
-      .save(s"$writePath/sample_table")
+//      .save()
+      .save(s"$writePath")
   }
 
   def timeTravelQuery(spark: SparkSession, writePath: String, asOfInstant: String) = {
     val timeTravelDF = spark.read.format("hudi")
       .option("as.of.instant", asOfInstant)
-      .load(s"$writePath/sample_table")
+      .load(s"$writePath")
 
     timeTravelDF.show()
   }

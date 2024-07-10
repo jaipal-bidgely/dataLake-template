@@ -1,0 +1,3 @@
+data load time (clustering, bulk load, indexing, cleanup)
+query time
+parameters set
