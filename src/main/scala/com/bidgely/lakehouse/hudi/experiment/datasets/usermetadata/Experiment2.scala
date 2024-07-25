@@ -220,9 +220,9 @@ object Experiment2 {
       retained = 1
     )
     startTime = System.nanoTime()
-    writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, Some(clusteringOptions), Some(cleaningOptions))    // Clustering and Cleaning
+//    writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, Some(clusteringOptions), Some(cleaningOptions))    // Clustering and Cleaning
     // writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, None, Some(cleaningOptions))                    // only Cleaning
-    // writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, Some(clusteringOptions), None)                  // only Clustering
+     writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, Some(clusteringOptions), None)                  // only Clustering
     // writeHudiTable(spark, df_history, writePath_history, SaveMode.Overwrite, hudiOptions, None, None)                                     // none
     endTime = System.nanoTime()
     println(s"Hudi: Time taken for write (historic load) operation:  ${(endTime - startTime) / 1e9} seconds")
@@ -245,11 +245,10 @@ object Experiment2 {
 
       // Write to Hudi Table
       startTime = System.nanoTime()
-      writeHudiTable(spark, df, writePath_history, SaveMode.Overwrite, hudiOptions, Some(clusteringOptions), Some(cleaningOptions))
+      writeHudiTable(spark, df, writePath_history, SaveMode.Append, hudiOptions, Some(clusteringOptions), None)
       endTime = System.nanoTime()
       println(s"Hudi: Time taken for write (a month) operation: ${(endTime - startTime) / 1e9} seconds")
     }
-
 
 
 
@@ -431,7 +430,7 @@ object Experiment2 {
     )
 
     startTime = System.nanoTime()
-    writeHudiTable(spark, df_dedup, writePath_dedup, SaveMode.Overwrite, hudiOptions_dedup, Some(clusteringOptions), Some(cleaningOptions))
+    writeHudiTable(spark, df_dedup, writePath_dedup, SaveMode.Overwrite, hudiOptions_dedup, Some(clusteringOptions), None)
     endTime = System.nanoTime()
     println(s"Hudi: Time taken for write (historic load dedup) operation:  ${(endTime - startTime) / 1e9} seconds")
 
@@ -445,6 +444,19 @@ object Experiment2 {
       s"$readPath/pilot_id=10015/event_month=2024-03-01/"
     )
 
+
+    val hudiOptions_dedup_upsert = getHudiOptions(
+      tableName = "hudi_exp1_dedup",
+      databaseName = "default",
+      recordKeyField = "uuid",
+      precombineField = "last_updated_timestamp",
+      partitionPathField = "pilot_id",
+      writeOperation = "upsert",
+      indexType = None,                    // Some("GLOBAL_SIMPLE")
+      drop_duplicates = "true",
+      writePath = writePath_dedup
+    )
+
     paths_dedup.foreach { path_dedup =>
       // Load data
       val df_temp = loadData(spark, Seq(path_dedup), "event_date", "yyyy-MM")
@@ -452,7 +464,7 @@ object Experiment2 {
 
       // Write to Hudi Table
       startTime = System.nanoTime()
-      writeHudiTable(spark, df, writePath_dedup, SaveMode.Overwrite, hudiOptions_dedup, Some(clusteringOptions), Some(cleaningOptions))
+      writeHudiTable(spark, df, writePath_dedup, SaveMode.Append, hudiOptions_dedup_upsert, Some(clusteringOptions), None)
       endTime = System.nanoTime()
       println(s"Hudi: Time taken for write (a month dedup) operation: ${(endTime - startTime) / 1e9} seconds")
     }

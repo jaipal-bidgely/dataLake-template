@@ -32,7 +32,7 @@ object DeltaLake {
                 partitionCol: String,
                 partitionFormat: String
               ): DataFrame = {
-    val df = spark.read.parquet(readPaths: _*)
+    val df = spark.read.option("mergeSchema", "true").parquet(readPaths: _*)
 //    df.withColumn("partitionpath", date_format(col(partitionCol), partitionFormat))
     df
   }
@@ -48,6 +48,21 @@ object DeltaLake {
       .format("delta")
       .mode(saveMode)
       .partitionBy(partitionKey)
+      .option("overwriteSchema", "true")
+      .save(writePath)
+  }
+
+  def writeDeltaLakeTable(
+                           spark: SparkSession,
+                           df: DataFrame,
+                           writePath: String,
+                           saveMode: SaveMode,
+                           partitionKeys: Seq[String]
+                         ): Unit = {
+    df.write
+      .format("delta")
+      .mode(saveMode)
+      .partitionBy(partitionKeys: _*)
       .option("overwriteSchema", "true")
       .save(writePath)
   }
@@ -74,7 +89,7 @@ object DeltaLake {
         s"t.$primaryKey = s.$primaryKey"
       )
       .whenMatched(s"t.$precombineKey < s.$precombineKey")
-      .updateExpr(updateMap)
+      .updateAll()
       .whenNotMatched()
       .insertAll()
       .execute()

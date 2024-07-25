@@ -1,0 +1,455 @@
+
+// NOTE: the experiment numbers here are different than one in slides, rather look at the dataset.
+
+
+EXPERIMENT 2 (user-home-data/home-meta-data)
+DELTALAKE:
+
+	Delta: Time taken for loading data (historic load) operation: 24.167869708 seconds
+	Delta: Time taken for write (historic load) operation: 226.024435507 seconds
+	Delta: Time taken for compaction: 685.17530883 seconds
+	Delta: Time taken for z-order clustering: 469.259089498 seconds
+
+	Delta: Time taken for write (a month) operation: 3.827463818 seconds
+	Delta: Time taken for compaction: 0.823094574 seconds
+	Delta: Time taken for z-order clustering: 3.880009775 seconds
+
+	Delta: Time taken for write (a month) operation: 5.542338487 seconds
+	Delta: Time taken for compaction: 5.804775866 seconds
+	Delta: Time taken for z-order clustering: 7.470980308 seconds
+
+	Delta: Time taken for write (a month) operation: 4.421204289 seconds
+	Delta: Time taken for compaction: 0.45934275 seconds
+	Delta: Time taken for z-order clustering: 5.341434979 seconds
+
+	Delta: Time taken for dedup operation: 0.093653238 seconds
+	Delta: Time taken for write (historic load dedup) operation: 205.549548836 seconds
+	Delta: Time taken for compaction: 61.324198067 seconds
+	Delta: Time taken for z-order clustering: 47.571226356 seconds
+
+	Delta: Time taken for write (a month) operation: 72.895955506 seconds
+	Delta: Time taken for compaction: 1.291565127 seconds
+	Delta: Time taken for z-order clustering: 62.065375831 seconds
+
+	Delta: Time taken for write (a month) operation: 73.13192873 seconds
+	Delta: Time taken for compaction: 1.016294826 seconds
+	Delta: Time taken for z-order clustering: 54.110436291 seconds
+
+	Delta: Time taken for write (a month) operation: 30.700413257 seconds
+	Delta: Time taken for compaction: 0.729160247 seconds
+	Delta: Time taken for z-order clustering: 47.899646977 seconds
+
+
+	before cleaning in dedup folder: 4.6 gb, 4033 objects
+	after cleaning in dedup folder: 1.3 GB, 23 objects
+
+	Delta: Time taken for z-order clustering: 99.125834903 seconds
+	Deleted 4019 files and directories in a total of 5 directories.
+	Delta: Time taken for cleaning: 147.474619625 seconds
+
+
+
+	before cleaning in history folder: 410.3 GB, 5,980 objects
+	after cleaning in history folder: 67.6 GB, 85 objects
+	(took 11 mins)
+
+
+
+	Attempt 1 took 1.2 h
+	Attempt 2 took 35 mins
+
+
+
+
+HUDI:
+
+	Hudi: Time taken for loading data (historic load) operation: 32.298091928 seconds
+	# WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+	Hudi: Time taken for write (historic load) operation:  632.874285467 seconds
+	Hudi: Time taken for write (a month) operation: 332.071078656 seconds
+	Hudi: Time taken for write (a month) operation: 374.675266179 seconds
+	Hudi: Time taken for write (a month) operation: 368.533872277 seconds
+	Hudi: Time taken for write (historic load dedup) operation:  1197.890408832 seconds
+	Hudi: Time taken for write (a month dedup) operation: 77.368221315 seconds
+	Hudi: Time taken for write (a month dedup) operation: 112.232184039 seconds
+	Hudi: Time taken for write (a month dedup) operation: 69.176644783 seconds
+
+	Total time: 54 mins (all month writes are upsert in dedup)
+
+
+	before cleaning (dedup): Total number of objects = 131
+							 Total size = 2.4 GB
+
+	after cleaning (dedup): Total number of objects = 108
+							Total size = 962.7 MB
+
+	cleaning command:
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment4/hudi/dedup/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment4/hudi/history/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+	before cleaning (history): Total number of objects = 7,246
+							   Total size = 230.4 GB
+
+	after cleaning (history): Total number of objects = 840
+							Total size = 88.9 GB
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+EXPERIMENT 4 (hybrid-disagg-electric)
+
+DELTALAKE
+
+	Delta: Time taken for loading data (historic load) operation: 107.060726443 seconds
+	Delta: Time taken for write (historic load) operation: 705.235700584 seconds
+
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 10.574862329 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 6.852942412 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 14.767673479 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 8.576920019 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 11.909885775 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) history operation: 5.53846541 seconds
+
+	Delta: Time taken for dedup operation: 0.093615456 seconds
+	Delta: Time taken for write (historic load dedup) operation: 552.584544421 seconds
+
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 40.900065176 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 16.108736084 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 80.485379137 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 30.388381968 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 47.555663283 seconds
+	Delta: Time taken for write (bill_start_month=2023-07-01) dedup operation: 12.313133608 seconds
+
+
+	Total time: 30 mins
+
+
+	before cleaning and clustering:
+	dedup: 1.7 GB and 6014 objects
+	history: 85.8 GB and 164109 objects
+
+
+	after cleaning and clustering:
+
+	dedup: 1.6 GB and 27 objects
+	history: 149.4 GB 164,478 objects
+
+
+	Delta: Time taken for z-order clustering: 95.974376161 seconds for dedup
+	Deleted 6000 files and directories in a total of 7 directories.
+	Delta: Time taken for cleaning: 205.925909286 seconds for dedup
+	Delta: Time taken for z-order clustering: 372.339942492 seconds for history
+	Deleted 0 files and directories in a total of 7 directories.
+	Delta: Time taken for cleaning: 17.233994736 seconds for history
+
+
+	after clustering and cleaning once again for only history:
+	dedup: 1.6 GB and 27 objects
+	history: 127.5 GB and 606 objects
+
+	Delta: Time taken for z-order clustering: 272.974177942 seconds for history
+	Deleted 164101 files and directories in a total of 7 directories.
+	Delta: Time taken for cleaning: 5202.097491165 seconds for history
+
+
+
+	// IGNORE HUDI PART, I DID SEPARATE EXPERIMENT USING INLINE CLUSTERING, AS EXTERNAL CLUSTERING WAS NOT WORKING WITH CLEANING, LOOK FOR EXP 4_1.
+
+HUDI
+
+	Hudi: Time taken for loading data (historic load) operation: 110.084075837 seconds
+	# WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+	Hudi: Time taken for write (historic load) operation:  783.773741486 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 23.607094643 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 18.439309731 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 28.720499352 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 22.633178278 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 29.263478267 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 20.053542254 seconds
+	Hudi: Time taken for write (historic load dedup) operation:  1362.687023826 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 82.080858655 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 93.213141556 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 103.627511816 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 92.258548908 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 111.937965722 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 87.254406779 seconds
+
+	Total time: 45 mins
+
+
+	for hudi cli:
+	cd /lib/hudi/cli/bin
+	then bash hudi-cli.sh
+
+
+
+	before cleaning:
+	history: 150.4 GB and 164,199 objects
+	dedup: 2.2 GB and 183 objects
+
+
+
+
+
+	clustering configs
+
+	hoodie.clustering.async.enabled=true
+	hoodie.clustering.async.max.commits=1
+	hoodie.clustering.plan.strategy.target.file.max.bytes=268435456 	#256Mb
+	hoodie.clustering.plan.strategy.small.file.limit=268435456 		#256Mb
+	hoodie.clustering.plan.strategy.max.num.groups=4096
+	hoodie.clustering.layout.optimize.strategy="z-order"
+	hoodie.clustering.plan.strategy.sort.columns="uuid"
+
+
+	Before clustering:
+	History: 150.4 GB and 164,199 objects
+	dedup: 796.7 MB and 132 objects
+
+
+	clustering command:
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 8g --executor-cores 2 --driver-memory 8g \
+	  --class org.apache.hudi.utilities.HoodieClusteringJob `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --props s3://bidgely-lakehouse-pocs/clusteringjob.properties \
+	  --mode scheduleAndExecute \
+	  --table-name hudi_exp4_dedup \
+	  --base-path s3://bidgely-lakehouse-pocs/experiments/experiment4/hudi/dedup/ \
+
+
+	z-order clustering took 1.1hr for history
+
+
+	After clustering:
+	history: 231.5 GB and 164,284 objects
+	dedup: 1.5 GB and 145 objects
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment4/hudi/dedup/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+	  s3://bidgely-lakehouse-pocs/experiments/experiment4/hudi/history/
+
+	After cleaning:
+	history:
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+EXPERIMENT 5 (utility-billing-data)
+
+DELTALAKE
+
+	Delta: Time taken for loading data (historic load) operation: 75.771504106 seconds
+	Delta: Time taken for write (historic load) operation: 522.677621867 seconds
+
+	Delta: Time taken for write (bill_start_month=2023-08-01) history operation: 12.721797674 seconds
+	Delta: Time taken for write (bill_start_month=2023-08-01) history operation: 8.797367933 seconds
+	Delta: Time taken for write (bill_start_month=2023-08-01) history operation: 8.130186448 seconds
+
+	Delta: Time taken for dedup operation: 0.053221112 seconds
+	Delta: Time taken for write (historic load dedup) operation: 454.339604325 seconds
+
+	Delta: Time taken for write (bill_start_month=2023-08-01) dedup operation: 27.759076115 seconds
+	Delta: Time taken for write (bill_start_month=2023-08-01) dedup operation: 12.167172178 seconds
+	Delta: Time taken for write (bill_start_month=2023-08-01) dedup operation: 12.276431974 seconds
+
+	Total time: 20 min
+
+
+	before cleaning and clustering:
+	dedup: 203.9 MB and 3008 objects
+	history: 106.9 GB and 72746 objects
+
+	after cleaning and clustering:
+	dedup: 170.1 MB and 15 objects
+	history: 153.7 GB and 73172 objects
+
+
+	after cleaning and clustering for history only again
+	dedup: 170.1 MB and 15 objects
+	history: 94.4 GB and 621 objects
+
+	Delta: Time taken for z-order clustering: 279.500340347 seconds for history
+	Deleted 72741 files and directories in a total of 4 directories.
+	Delta: Time taken for cleaning: 2139.241872407 seconds for history
+
+
+
+	// IGNORE HUDI PART, I DID SEPARATE EXPERIMENT USING INLINE CLUSTERING, AS EXTERNAL CLUSTERING WAS NOT WORKING WITH CLEANING, LOOK FOR EXP 5_1.
+
+HUDI
+
+	Hudi: Time taken for loading data (historic load) operation: 76.79577923 seconds
+	# WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+	Hudi: Time taken for write (historic load) operation:  651.294571591 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 28.915900887 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 18.753951644 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 20.763038188 seconds
+	Hudi: Time taken for write (historic load dedup) operation:  1351.873661824 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 46.227086537 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 29.660671431 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 26.119481702 seconds
+
+
+	Total time: 39 min
+
+	before clustering:
+	dedup: 120.0 MB and 75 objects
+	history: 148.3 GB and 72800 objects
+
+	// CLUSTERING COMMAND
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 8g --executor-cores 2 --driver-memory 8g \
+	  --class org.apache.hudi.utilities.HoodieClusteringJob `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --props s3://bidgely-lakehouse-pocs/clusteringjob.properties \
+	  --mode scheduleAndExecute \
+	  --table-name hudi_exp5_dedup \
+	  --base-path s3://bidgely-lakehouse-pocs/experiments/experiment5/hudi/dedup/ \
+
+
+	after clustering:
+	dedup: 212.3 MB and 85 objects (took 1.6 mins)
+	history: 271.4 GB and 72885 objects (took 2.5 hrs)
+
+	// CLEANING COMMAND
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment5/hudi/dedup/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Experiment 5_1 (Clustering and Cleaning is done at the each month insert)
+
+HUDI:
+
+	Hudi: Time taken for loading data (historic load) operation: 77.24219932 seconds
+	# WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+	Hudi: Time taken for write (historic load) operation:  666.923594908 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 3287.935069162 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 511.347359278 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) history operation: 406.372689658 seconds
+	Hudi: Time taken for write (historic load dedup) operation:  1350.337226392 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 66.231533129 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 56.03982746 seconds
+	Hudi: Time taken for write (bill_start_month=2023-08-01) dedup operation: 66.263101205 seconds
+
+	Total time took: 1.8hr
+
+	Before final cleaning
+
+	dedup: 302.9 MB and 98 objects
+	history: 199.0 GB and 1244 objects
+
+
+	// CLEANING COMMAND
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment5_1/hudi/dedup/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+	After final cleaning:
+
+	dedup: 197.2 MB and 101 objects (cleaning took barely any time, less than 1 minute)
+	history: 129.9 GB and 702 objects (here too)
+
+
+
+
+
+Experiment 4_1 (Clustering and Cleaning is done at the last 2 incremental month insert)
+
+HUDI:
+
+	Hudi: Time taken for loading data (historic load) operation: 112.189546152 seconds
+	# WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+	Hudi: Time taken for write (historic load) operation:  774.551410203 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 24.453484056 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 19.842620955 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 28.945491612 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 22.787297367 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 4148.491994674 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) history operation: 391.749006737 seconds
+	Hudi: Time taken for write (historic load dedup) operation:  1370.40013164 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 20.778759327 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 15.617849008 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 31.494352729 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 21.630679698 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 97.122473539 seconds
+	Hudi: Time taken for write (bill_start_month=2023-07-01) dedup operation: 92.953203607 seconds
+
+
+	Total time: 2 hrs
+
+	Before cleaning:
+
+	dedup: 2.3 GB and 160 objects
+	history: 284.5 GB and 165070 objects
+
+
+
+	spark-submit --deploy-mode cluster \
+	  --executor-memory 4g --executor-cores 2 --driver-memory 4g \
+	  --class org.apache.hudi.utilities.HoodieCleaner `ls /lib/hudi/hudi-utilities-bundle_*.jar` \
+	  --target-base-path s3://bidgely-lakehouse-pocs/experiments/experiment4_1/hudi/dedup/ \
+	  --hoodie-conf hoodie.cleaner.policy=KEEP_LATEST_COMMITS \
+	  --hoodie-conf hoodie.cleaner.commits.retained=1 \
+	  --hoodie-conf hoodie.cleaner.parallelism=200
+
+
+	After cleaning:
+
+	dedup: 1.5 GB and 121 objects (took < 1 min)
+	history: 134.3 GB and 1,014 objects (took 1.5 mins)
+
+

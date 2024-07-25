@@ -1,0 +1,41 @@
+// i4g.4xlarge, 512GB EBS storage, 122GB mem, 16v cores, 12 core instances.
+
+aws emr create-cluster \
+    --applications Name=Hadoop Name=Spark Name=Trino Name=Hive \
+    --tags 'Environment=nonprodqa' 'Owner=ops' 'Utility=all' 'Component=data-lake' 'Name=EMR_Adhoc' \
+    --ec2-attributes '{"KeyName":"emr","AdditionalSlaveSecurityGroups":["sg-7deac300"],"InstanceProfile":"EMR_EC2_DefaultRole","ServiceAccessSecurityGroup":"","SubnetId":"subnet-24b9c042","EmrManagedSlaveSecurityGroup":"sg-0630d8b3dd4185013","EmrManagedMasterSecurityGroup":"sg-0d3e8e0f817465d9d","AdditionalMasterSecurityGroups":["sg-7deac300"]}' \
+    --service-role EMR_DefaultRole \
+    --enable-debugging \
+    --release-label emr-6.15.0 \
+    --log-uri 's3n://bidgely-adhoc-dev/dhruv/log' \
+    --name 'Dhruv_Adhoc_EMR' \
+    --configurations '[{"Classification":"hive-site","Properties":{"hive.metastore.client.factory.class":"com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory","hive.metastore.schema.verification":"false","datanucleus.autoCreateSchema":"true","datanucleus.fixedDatastore":"false","datanucleus.schema.autoCreateTables":"true"}},{"Classification":"trino-connector-hive","Properties":{"hive.metastore":"glue"}},{"Classification":"spark","Properties":{}}]' \
+    --instance-fleets '[{"InstanceFleetType":"MASTER","TargetOnDemandCapacity":1,"TargetSpotCapacity":0,"InstanceTypeConfigs":[{"BidPrice":"0.5","WeightedCapacity":1,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":256,"VolumeType":"gp3"},"VolumesPerInstance":2}]},"InstanceType":"i4g.4xlarge"}],"Name":"Master Instance Group"},{"InstanceFleetType":"CORE","TargetOnDemandCapacity":0,"TargetSpotCapacity":12,"InstanceTypeConfigs":[{"BidPrice":"0.5","WeightedCapacity":1,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":256,"VolumeType":"gp3"},"VolumesPerInstance":2}]},"InstanceType":"i4g.4xlarge"}],"Name":"Core Instance Group"}]' \
+    --region us-west-2
+
+
+// m4.2xlarge, 64GB EBS storage, 32GB mem, 8v cores, 12 core instances.
+
+aws emr create-cluster \
+    --applications Name=Hadoop Name=Spark Name=Trino Name=Hive \
+    --tags 'Environment=nonprodqa' 'Owner=ops' 'Utility=all' 'Component=data-lake' 'Name=EMR_Adhoc' \
+    --ec2-attributes '{"KeyName":"emr","AdditionalSlaveSecurityGroups":["sg-7deac300"],"InstanceProfile":"EMR_EC2_DefaultRole","ServiceAccessSecurityGroup":"","SubnetId":"subnet-24b9c042","EmrManagedSlaveSecurityGroup":"sg-0630d8b3dd4185013","EmrManagedMasterSecurityGroup":"sg-0d3e8e0f817465d9d","AdditionalMasterSecurityGroups":["sg-7deac300"]}' \
+    --service-role EMR_DefaultRole \
+    --enable-debugging \
+    --release-label emr-6.15.0 \
+    --log-uri 's3n://bidgely-adhoc-dev/dhruv/log' \
+    --name 'Dhruv_Adhoc_EMR' \
+    --configurations '[{"Classification":"hive-site","Properties":{"hive.metastore.client.factory.class":"com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory","hive.metastore.schema.verification":"false","datanucleus.autoCreateSchema":"true","datanucleus.fixedDatastore":"false","datanucleus.schema.autoCreateTables":"true"}},{"Classification":"trino-connector-hive","Properties":{"hive.metastore":"glue"}},{"Classification":"spark","Properties":{}}]' \
+    --instance-fleets '[{"InstanceFleetType":"MASTER","TargetOnDemandCapacity":0,"TargetSpotCapacity":1,"InstanceTypeConfigs":[{"BidPrice":"0.5","WeightedCapacity":1,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":64,"VolumeType":"gp3"},"VolumesPerInstance":1}]},"InstanceType":"m4.2xlarge"}],"Name":"Master Instance Group"},{"InstanceFleetType":"CORE","TargetOnDemandCapacity":0,"TargetSpotCapacity":12,"InstanceTypeConfigs":[{"BidPrice":"0.5","WeightedCapacity":1,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":64,"VolumeType":"gp3"},"VolumesPerInstance":1}]},"InstanceType":"m4.2xlarge"}],"Name":"Core Instance Group"}]' \
+    --region us-west-2
+
+
+
+Spark submit for Hudi:
+    spark-submit --deploy-mode cluster --executor-memory 8g --executor-cores 2 --driver-memory 8g --packages org.apache.hudi:hudi-spark3.4-bundle_2.12:0.14.0,org.apache.hive:hive-exec:3.1.3 --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" --conf "spark.sql.hive.convertMetastoreParquet=false" --name lakehouse_test --class com.bidgely.lakehouse.hudi.experiment.datasets.usermetadata.Experiment4_1 s3://bidgely-lakehouse-pocs/dataLake-template-1.0-jar-with-dependencies.jar
+
+
+Spark submit for Deltalake:
+    spark-submit --deploy-mode cluster --executor-memory 8g --executor-cores 2 --driver-memory 8g --packages io.delta:delta-core_2.12:2.4.0 --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"  --name lakehouse_test --class com.bidgely.lakehouse.deltalake.experiment.datasets.usermetadata.Experiment2 s3://bidgely-lakehouse-pocs/dataLake-template-1.0-jar-with-dependencies.jar
+
+
